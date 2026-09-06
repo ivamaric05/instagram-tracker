@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title th:text="'@' + ${profile.username}">
+        Instagram Tracker
+    </title>
+
+    <link rel="stylesheet"
+          href="/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <a href="/">
+        ← Back
+    </a>
+
+    <h1>
+        @<span th:text="${profile.username}"></span>
+    </h1>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWERS -->
+    <!-- ================================================= -->
+
+    <hr>
+
+    <h2>Followers</h2>
+
+    <p>
+        Last checked:
+
+        <span
+                th:if="${profile.lastCheckedFollowers != null}"
+                th:text="${#temporals.format(profile.lastCheckedFollowers, 'dd.MM.yyyy. HH:mm')}">
+    </span>
+
+        <span
+                th:if="${profile.lastCheckedFollowers == null}">
+        Never
+    </span>
+
+    </p>
+
+
+    <h3>
+        Enter current followers
+    </h3>
+
+    <p>
+        Paste one username per line.
+    </p>
+
+
+    <form
+            th:action="@{/profiles/{username}/check-followers(username=${profile.username})}"
+            method="post">
+
+        <textarea
+                name="followersText"
+                rows="12"
+                cols="50"
+                placeholder="ana123&#10;marko456&#10;milica789"
+                required>
+        </textarea>
+
+        <br><br>
+
+        <button type="submit">
+            Check followers
+        </button>
+
+    </form>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWER CATEGORIES -->
+    <!-- ================================================= -->
+
+    <h3>Follower categories</h3>
+
+    <form
+            th:action="@{/profiles/{username}/followers/categories(username=${profile.username})}"
+            method="post">
+
+
+        <!-- NEW FOLLOWERS -->
+
+        <h3>• New followers</h3>
+
+        <ul>
+
+            <li
+                    th:each="follower : ${profile.followers}"
+                    th:if="${follower.isNew() && follower.isFollowing()}">
+
+                @<span th:text="${follower.username}"></span>
+
+                <select
+                        th:name="'category_' + ${follower.id}">
+
+                    <option
+                            value="Unknown"
+                            th:selected="${follower.category == 'Unknown'}">
+                        Unknown
+                    </option>
+
+                    <option
+                            value="Male"
+                            th:selected="${follower.category == 'Male'}">
+                        Male
+                    </option>
+
+                    <option
+                            value="Female"
+                            th:selected="${follower.category == 'Female'}">
+                        Female
+                    </option>
+
+                    <option
+                            value="Business"
+                            th:selected="${follower.category == 'Business'}">
+                        Business
+                    </option>
+
+                </select>
+
+            </li>
+
+        </ul>
+
+
+        <!-- CURRENT FOLLOWERS -->
+
+        <h3>• Current followers</h3>
+
+        <ul>
+
+            <li
+                    th:each="follower : ${profile.followers}"
+                    th:if="${follower.isFollowing() && !follower.isNew()}">
+
+                @<span th:text="${follower.username}"></span>
+
+                <select
+                        th:name="'category_' + ${follower.id}">
+
+                    <option
+                            value="Unknown"
+                            th:selected="${follower.category == 'Unknown'}">
+                        Unknown
+                    </option>
+
+                    <option
+                            value="Male"
+                            th:selected="${follower.category == 'Male'}">
+                        Male
+                    </option>
+
+                    <option
+                            value="Female"
+                            th:selected="${follower.category == 'Female'}">
+                        Female
+                    </option>
+
+                    <option
+                            value="Business"
+                            th:selected="${follower.category == 'Business'}">
+                        Business
+                    </option>
+
+                </select>
+
+            </li>
+
+        </ul>
+
+
+        <button type="submit">
+            Save categories
+        </button>
+
+    </form>
+
+
+    <!-- UNFOLLOWED -->
+
+    <h3>• Unfollowed</h3>
+
+    <ul>
+
+        <li
+                th:each="follower : ${profile.followers}"
+                th:if="${!follower.isFollowing()}">
+
+            @<span th:text="${follower.username}"></span>
+
+        </li>
+
+    </ul>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWER ANALYTICS -->
+    <!-- ================================================= -->
+
+    <hr>
+
+    <h2>Follower Analytics</h2>
+
+    <div class="analytics-counts">
+
+        <p>
+            Male:
+            <strong th:text="${maleCount}">0</strong>
+        </p>
+
+        <p>
+            Female:
+            <strong th:text="${femaleCount}">0</strong>
+        </p>
+
+        <p>
+            Business:
+            <strong th:text="${businessCount}">0</strong>
+        </p>
+
+        <p>
+            Unknown:
+            <strong th:text="${unknownCount}">0</strong>
+        </p>
+
+    </div>
+
+
+    <section class="analytics-card">
+
+        <div class="analytics-header">
+
+            <div>
+
+                <h2>
+                    Follower insights
+                </h2>
+
+                <p>
+                    Current followers by category
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="category-chart-container">
+
+            <canvas id="categoryChart"></canvas>
+
+            <div class="chart-center">
+
+                <span
+                        class="chart-total"
+                        th:text="${maleCount + femaleCount + businessCount + unknownCount}">
+                    0
+                </span>
+
+                <span class="chart-label">
+                    Followers
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWER HISTORY -->
+    <!-- ================================================= -->
+
+    <hr>
+
+    <h2>Follower History</h2>
+
+    <p>
+        Your follower count over time.
+    </p>
+
+
+    <table class="history-table">
+
+        <thead>
+
+        <tr>
+
+            <th>
+                Date
+            </th>
+
+            <th>
+                Followers
+            </th>
+
+        </tr>
+
+        </thead>
+
+        <tbody>
+
+        <tr
+                th:each="history : ${profile.followerHistory}">
+
+            <td
+                    th:text="${#temporals.format(history.checkedAt, 'dd.MM.yyyy HH:mm')}">
+            </td>
+
+            <td
+                    th:text="${history.followerCount}">
+            </td>
+
+        </tr>
+
+        </tbody>
+
+    </table>
+
+
+    <p
+            th:if="${#lists.isEmpty(profile.followerHistory)}">
+
+        No history yet.
+
+    </p>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWING -->
+    <!-- ================================================= -->
+
+    <hr>
+
+    <h2>Following</h2>
+
+    <p>
+
+        Last checked:
+
+        <span
+                th:if="${profile.lastCheckedFollowing != null}"
+                th:text="${#temporals.format(profile.lastCheckedFollowing, 'dd.MM.yyyy. HH:mm')}">
+    </span>
+
+        <span
+                th:if="${profile.lastCheckedFollowing == null}">
+        Never
+    </span>
+
+    </p>
+
+
+    <h3>
+        Enter current following
+    </h3>
+
+    <p>
+        Paste one username per line.
+    </p>
+
+
+    <form
+            th:action="@{/profiles/{username}/check-following(username=${profile.username})}"
+            method="post">
+
+        <textarea
+                name="followingText"
+                rows="12"
+                cols="50"
+                placeholder="ana123&#10;marko456&#10;milica789"
+                required>
+        </textarea>
+
+        <br><br>
+
+        <button type="submit">
+            Check following
+        </button>
+
+    </form>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWING CATEGORIES -->
+    <!-- ================================================= -->
+
+    <h3>
+        Following categories
+    </h3>
+
+
+    <form
+            th:action="@{/profiles/{username}/following/categories(username=${profile.username})}"
+            method="post">
+
+
+        <!-- NEW FOLLOWING -->
+
+        <h3>
+            • New following
+        </h3>
+
+        <ul>
+
+            <li
+                    th:each="following : ${profile.following}"
+                    th:if="${following.isNew() && following.isFollowing()}">
+
+                @<span th:text="${following.username}"></span>
+
+                <select
+                        th:name="'following_category_' + ${following.id}">
+
+                    <option
+                            value="Unknown"
+                            th:selected="${following.category == 'Unknown'}">
+                        Unknown
+                    </option>
+
+                    <option
+                            value="Male"
+                            th:selected="${following.category == 'Male'}">
+                        Male
+                    </option>
+
+                    <option
+                            value="Female"
+                            th:selected="${following.category == 'Female'}">
+                        Female
+                    </option>
+
+                    <option
+                            value="Business"
+                            th:selected="${following.category == 'Business'}">
+                        Business
+                    </option>
+
+                </select>
+
+            </li>
+
+        </ul>
+
+
+        <!-- NO LONGER FOLLOWING -->
+
+        <h3>
+            • No longer following
+        </h3>
+
+        <ul>
+
+            <li
+                    th:each="following : ${profile.following}"
+                    th:if="${!following.isFollowing()}">
+
+                @<span th:text="${following.username}"></span>
+
+            </li>
+
+        </ul>
+
+
+        <!-- CURRENT FOLLOWING -->
+
+        <h3>
+            • Current following
+        </h3>
+
+        <ul>
+
+            <li
+                    th:each="following : ${profile.following}"
+                    th:if="${following.isFollowing() && !following.isNew()}">
+
+                @<span th:text="${following.username}"></span>
+
+                <select
+                        th:name="'following_category_' + ${following.id}">
+
+                    <option
+                            value="Unknown"
+                            th:selected="${following.category == 'Unknown'}">
+                        Unknown
+                    </option>
+
+                    <option
+                            value="Male"
+                            th:selected="${following.category == 'Male'}">
+                        Male
+                    </option>
+
+                    <option
+                            value="Female"
+                            th:selected="${following.category == 'Female'}">
+                        Female
+                    </option>
+
+                    <option
+                            value="Business"
+                            th:selected="${following.category == 'Business'}">
+                        Business
+                    </option>
+
+                </select>
+
+            </li>
+
+        </ul>
+
+
+        <button type="submit">
+            Save categories
+        </button>
+
+    </form>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWING ANALYTICS -->
+    <!-- ================================================= -->
+
+    <hr>
+
+    <h2>
+        Following Analytics
+    </h2>
+
+
+    <div class="analytics-counts">
+
+        <p>
+            Male:
+            <strong th:text="${followingMaleCount}">
+                0
+            </strong>
+        </p>
+
+        <p>
+            Female:
+            <strong th:text="${followingFemaleCount}">
+                0
+            </strong>
+        </p>
+
+        <p>
+            Business:
+            <strong th:text="${followingBusinessCount}">
+                0
+            </strong>
+        </p>
+
+        <p>
+            Unknown:
+            <strong th:text="${followingUnknownCount}">
+                0
+            </strong>
+        </p>
+
+    </div>
+
+
+    <section class="analytics-card">
+
+        <div class="analytics-header">
+
+            <div>
+
+                <h2>
+                    Following insights
+                </h2>
+
+                <p>
+                    Current following by category
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="category-chart-container">
+
+            <canvas id="followingCategoryChart"></canvas>
+
+            <div class="chart-center">
+
+                <span
+                        class="chart-total"
+                        th:text="${followingMaleCount + followingFemaleCount + followingBusinessCount + followingUnknownCount}">
+                    0
+                </span>
+
+                <span class="chart-label">
+                    Following
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- FOLLOWING HISTORY -->
+    <!-- ================================================= -->
+
+    <hr>
+
+    <h2>
+        Following History
+    </h2>
+
+    <p>
+        Your following count over time.
+    </p>
+
+
+    <table class="history-table">
+
+        <thead>
+
+        <tr>
+
+            <th>
+                Date
+            </th>
+
+            <th>
+                Following
+            </th>
+
+        </tr>
+
+        </thead>
+
+        <tbody>
+
+        <tr
+                th:each="history : ${profile.followingHistory}">
+
+            <td
+                    th:text="${#temporals.format(history.checkedAt, 'dd.MM.yyyy HH:mm')}">
+            </td>
+
+            <td
+                    th:text="${history.followingCount}">
+            </td>
+
+        </tr>
+
+        </tbody>
+
+    </table>
+
+
+    <p
+            th:if="${#lists.isEmpty(profile.followingHistory)}">
+
+        No history yet.
+
+    </p>
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- CHART.JS -->
+<!-- ================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+
+    /* =====================================================
+       FOLLOWER CHART
+       ===================================================== */
+
+    const maleCount = /*[[${maleCount}]]*/ 0;
+    const femaleCount = /*[[${femaleCount}]]*/ 0;
+    const businessCount = /*[[${businessCount}]]*/ 0;
+    const unknownCount = /*[[${unknownCount}]]*/ 0;
+
+    const followerCtx =
+        document.getElementById('categoryChart');
+
+
+    new Chart(followerCtx, {
+
+        type: 'doughnut',
+
+        data: {
+
+            labels: [
+                'Male',
+                'Female',
+                'Business',
+                'Unknown'
+            ],
+
+            datasets: [{
+
+                data: [
+                    maleCount,
+                    femaleCount,
+                    businessCount,
+                    unknownCount
+                ],
+
+                backgroundColor: [
+                    '#6366f1',
+                    '#ec4899',
+                    '#10b981',
+                    '#9ca3af'
+                ],
+
+                borderWidth: 0,
+
+                hoverOffset: 6
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            cutout: '72%',
+
+            plugins: {
+
+                legend: {
+                    position: 'bottom'
+                }
+
+            }
+
+        }
+
+    });
+
+
+    /* =====================================================
+       FOLLOWING CHART
+       ===================================================== */
+
+    const followingMaleCount =
+        /*[[${followingMaleCount}]]*/ 0;
+
+    const followingFemaleCount =
+        /*[[${followingFemaleCount}]]*/ 0;
+
+    const followingBusinessCount =
+        /*[[${followingBusinessCount}]]*/ 0;
+
+    const followingUnknownCount =
+        /*[[${followingUnknownCount}]]*/ 0;
+
+
+    const followingCtx =
+        document.getElementById('followingCategoryChart');
+
+
+    new Chart(followingCtx, {
+
+        type: 'doughnut',
+
+        data: {
+
+            labels: [
+                'Male',
+                'Female',
+                'Business',
+                'Unknown'
+            ],
+
+            datasets: [{
+
+                data: [
+                    followingMaleCount,
+                    followingFemaleCount,
+                    followingBusinessCount,
+                    followingUnknownCount
+                ],
+
+                backgroundColor: [
+                    '#6366f1',
+                    '#ec4899',
+                    '#10b981',
+                    '#9ca3af'
+                ],
+
+                borderWidth: 0,
+
+                hoverOffset: 6
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            cutout: '72%',
+
+            plugins: {
+
+                legend: {
+                    position: 'bottom'
+                }
+
+            }
+
+        }
+
+    });
+
+</script>
+
+</body>
+
+</html>

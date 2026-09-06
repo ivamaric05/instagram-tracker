@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="sr"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Instagram Tracker</title>
+
+    <link rel="stylesheet"
+          href="/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>
+        Instagram Follower Tracker
+    </h1>
+
+
+    <!-- ADD PROFILE -->
+
+    <h2>
+        Add profile
+    </h2>
+
+    <form
+            method="post"
+            action="/profiles">
+
+        <input
+                type="text"
+                name="username"
+                placeholder="Instagram username"
+                required
+        >
+
+        <button type="submit">
+            Add profile
+        </button>
+
+    </form>
+
+
+    <!-- TRACKED PROFILES -->
+
+    <h2>
+        Tracked profiles
+    </h2>
+
+    <ul>
+
+        <li
+                th:each="profile : ${profiles}">
+
+            <a
+                    th:href="@{/profiles/{username}(username=${profile.username})}">
+
+                @<span
+                    th:text="${profile.username}">
+                </span>
+
+            </a>
+
+        </li>
+
+    </ul>
+
+
+    <!-- INSTRUCTIONS -->
+
+    <hr>
+
+    <div class="instructions">
+
+        <h2>
+            Kako da preuzmeš listu pratilaca sa Instagrama
+        </h2>
+
+
+        <!-- KORAK 1 -->
+
+        <div class="instruction-step">
+
+            <h3>1. Otvori Instagram profil</h3>
+
+            <p>
+                Na računaru otvori Instagram i idi na profil
+                čije pratioce želiš da pratiš.
+            </p>
+
+        </div>
+
+
+        <!-- KORAK 2 -->
+
+        <div class="instruction-step">
+
+            <h3>2. Otvori listu Followers</h3>
+
+            <p>
+                Otvori listu <strong>Followers/Following</strong>
+                i skroluj skroz do kraja liste kako bi se učitali
+                svi pratioci.
+            </p>
+
+            <img src="/images/slika1.png"
+                 alt="Otvaranje Instagram profila"
+                 class="instruction-image">
+
+        </div>
+
+
+        <!-- KORAK 3 -->
+
+        <div class="instruction-step">
+
+            <h3>3. Otvori Developer Console</h3>
+
+            <p>
+                Otvori Developer Console pritiskom na
+                <strong>Ctrl + Shift + J</strong>.
+            </p>
+
+        </div>
+
+
+        <!-- KORAK 4 -->
+
+        <div class="instruction-step">
+
+            <h3>4. Pokreni kod</h3>
+
+            <p>
+                U konzolu kopiraj i pokreni sledeći kod:
+            </p>
+
+            <pre><code>[...document.querySelectorAll('a[href^="/"]')]
+.map(a => a.getAttribute('href'))
+.filter(href => href && /^\/[^\/]+\/$/.test(href))
+.map(href => href.slice(1, -1))
+.filter((username, index, arr) => arr.indexOf(username) === index)
+.join('\n')</code></pre>
+
+            <p>
+                Ako ti Instagram ne dozvoli kopiranje,
+                samo ukucaj <strong>allow pasting</strong>
+                u konzolu i pritisni Enter.
+            </p>
+
+            <img src="/images/slika2.png"
+                 alt="Otvaranje Instagram profila"
+                 class="instruction-image">
+
+        </div>
+
+
+        <!-- KORAK 5 -->
+
+        <div class="instruction-step">
+
+            <h3>5. Kopiraj listu</h3>
+
+            <p>
+                Kopiraj tekst koji se pojavi u konzoli.
+            </p>
+
+            <img src="/images/slika3.png"
+                 alt="Otvaranje Instagram profila"
+                 class="instruction-image">
+
+        </div>
+
+
+        <!-- KORAK 6 -->
+
+        <div class="instruction-step">
+
+            <h3>6. Nalepi listu u aplikaciju</h3>
+
+            <p>
+                Nalepi dobijenu listu u polje
+                <strong>Followers/Following</strong>
+                na stranici profila koji želiš da ažuriraš.
+            </p>
+
+
+        </div>
+
+
+        <!-- KORAK 7 -->
+
+        <div class="instruction-step">
+
+            <h3>7. Username-ovi</h3>
+
+            <p>
+                Svaki username treba da bude u posebnom redu.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
